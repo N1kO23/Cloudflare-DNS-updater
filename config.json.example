@@ -1,0 +1,11 @@
+{
+  "AuthKey": "your auth key here",
+  "Zones": [
+    {
+      "ZoneId": "the zone id",
+      "Records": [
+        "record.name.com"
+      ]
+    }
+  ]
+}

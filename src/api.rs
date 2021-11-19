@@ -1,14 +1,13 @@
-
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct CurrentIP {
-  pub ip: String
+  pub ip: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CloudFlareResult {
-  pub result: Vec<DNSRecordResult>
+  pub result: Vec<DNSRecordResult>,
 }
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DNSRecordResult {
@@ -30,9 +29,8 @@ pub struct UpdateRecord {
   pub proxied: bool,
 }
 
-
 const IP_ADDRESS_URL: &str = "https://api.ipify.org?format=json";
-const CF_BASE_URL: &str = "https://api.cloudflare.com/client/v4/zones/"; 
+const CF_BASE_URL: &str = "https://api.cloudflare.com/client/v4/zones/";
 
 pub async fn get_current_ip() -> Result<String, reqwest::Error> {
   let response = reqwest::get(IP_ADDRESS_URL).await?;
@@ -40,24 +38,37 @@ pub async fn get_current_ip() -> Result<String, reqwest::Error> {
   Ok(cur_ip.ip)
 }
 
-pub async fn get_record_ip(records: &[&'static str], zone: &str, auth_key: &str) -> Result<CloudFlareResult, Box<dyn std::error::Error>> {
+pub async fn get_record_ip(
+  records: &Vec<String>,
+  zone: &str,
+  auth_key: &str,
+) -> Result<CloudFlareResult, Box<dyn std::error::Error>> {
   let client = reqwest::Client::new();
   let url = format!("{}{}/dns_records?type=A", CF_BASE_URL, zone);
-    let res = client
-      .get(url)
-      .header("Authorization", format!("Bearer {}", auth_key))
-      .send()
-      .await?
-      .text()
-      .await?;
-    let mut results: CloudFlareResult = serde_json::from_str(&res)?;
-    results.result.retain(|record| records.contains(&record.name.as_str()));
+  let res = client
+    .get(url)
+    .header("Authorization", format!("Bearer {}", auth_key))
+    .send()
+    .await?
+    .text()
+    .await?;
+  let mut results: CloudFlareResult = serde_json::from_str(&res)?;
+  results
+    .result
+    .retain(|record| records.contains(&record.name));
   Ok(results)
 }
 
-pub async fn update_record(record: &DNSRecordResult, ip: &str, auth_key: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn update_record(
+  record: &DNSRecordResult,
+  ip: &str,
+  auth_key: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
   let client = reqwest::Client::new();
-  let url = format!("{}{}/dns_records/{}", CF_BASE_URL, record.zone_id, record.id);
+  let url = format!(
+    "{}{}/dns_records/{}",
+    CF_BASE_URL, record.zone_id, record.id
+  );
   client
     .put(url)
     .header("Authorization", format!("Bearer {}", auth_key))
@@ -66,11 +77,13 @@ pub async fn update_record(record: &DNSRecordResult, ip: &str, auth_key: &str) -
       name: record.name.to_string(),
       content: ip.to_string(),
       ttl: record.ttl,
-      proxied: record.proxied
+      proxied: record.proxied,
     })
     .send()
-    .await.unwrap()
+    .await
+    .unwrap()
     .text()
-    .await.unwrap();
+    .await
+    .unwrap();
   Ok(())
 }
