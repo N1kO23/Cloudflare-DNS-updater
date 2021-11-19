@@ -12,6 +12,7 @@ pub struct Config {
   pub zones: Vec<Zone>,
 }
 
+/// The structure of a zone
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Zone {
@@ -22,8 +23,14 @@ pub struct Zone {
 }
 
 /// Loads a config from file and returns it. If load fails, an error is thrown.
-/// ### Arguments
+/// # Arguments
 /// * `path` - Path to a custom config file, if unspecified, the config is loaded from root directory.
+/// # Returns
+/// * `Config` - The loaded config
+/// # Errors
+/// * `std::io::Error` - If the config file cannot be read
+/// * `serde_json::Error` - If the config file cannot be parsed
+/// * `std::env::VarError` - If the environment variable cannot be read or parsed
 pub fn load_config(path: &str) -> Result<Config, Box<dyn Error>> {
   let str: String;
   str = fs::read_to_string(path).unwrap().parse().unwrap();

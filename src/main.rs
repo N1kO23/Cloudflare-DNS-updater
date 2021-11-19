@@ -6,11 +6,14 @@ mod config_loader;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
+/// The main function of the program
 #[tokio::main]
 async fn main() {
   println!("Cloudflare IP updater v{}", VERSION);
-  println!("Loading config...");
-  let config = config_loader::load_config(handle_args().as_str()).expect("Failed to load config");
+  print!("Loading config... ");
+  let config =
+    config_loader::load_config(handle_args().as_str()).expect("\nFailed to load config!");
+  println!("Loaded!");
   loop {
     match check_and_update_ip(&config).await {
       Ok(()) => {}
@@ -20,11 +23,18 @@ async fn main() {
   }
 }
 
+/// Checks the zones and their flagged records for IP address changes and updates them.
+/// # Arguments
+/// * `config` - The configuration to use
+/// # Returns
+/// * `Ok(())` - If the IP addresses were updated successfully
+/// * `Err(e)` - If the IP addresses could not be updated
 async fn check_and_update_ip(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
   print!("\nGetting current IP address");
   let cur_ip = api::get_current_ip().await?;
   println!(" - {}\n", cur_ip);
   for z in 0..config.zones.len() {
+    println!("Updating records for zone {}", config.zones[z].zone_id);
     let record_ips: CloudFlareResult = api::get_record_ip(
       &config.zones[z].records,
       &config.zones[z].zone_id,
@@ -32,23 +42,30 @@ async fn check_and_update_ip(config: &Config) -> Result<(), Box<dyn std::error::
     )
     .await?;
     for i in 0..config.zones[z].records.len() {
-      if cur_ip != record_ips.result[i].content {
-        print!(
-          "Updating record {} from {} to {}",
-          record_ips.result[i].name, record_ips.result[i].content, cur_ip
-        );
-        match api::update_record(&record_ips.result[i], &cur_ip, &config.auth_key).await {
-          Ok(()) => println!(" - Record updated"),
-          Err(e) => println!(" - Error: {}", e),
+      if !record_ips.result.get(i).is_none() && !record_ips.result[i].locked {
+        if cur_ip != record_ips.result[i].content {
+          print!(
+            "Updating record {} from {} to {}",
+            record_ips.result[i].name, record_ips.result[i].content, cur_ip
+          );
+          match api::update_record(&record_ips.result[i], &cur_ip, &config.auth_key).await {
+            Ok(()) => println!(" - Record updated"),
+            Err(e) => println!(" - Error: {}", e),
+          }
+        } else {
+          println!("Record {} is up to date", record_ips.result[i].name);
         }
-      } else {
-        println!("Record {} is up to date", record_ips.result[i].name);
       }
     }
+    println!("Done updating zone")
   }
   Ok(())
 }
 
+/// Handles the input arguments
+/// Currently only custom config parameter is supported
+/// ### Returns
+/// * `String` - Path to the custom config file
 fn handle_args() -> String {
   let mut config_path: Option<&str> = None;
   let args: Vec<String> = std::env::args().collect();
