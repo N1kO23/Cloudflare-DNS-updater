@@ -32,7 +32,6 @@ pub struct Zone {
 /// # Errors
 /// * `std::io::Error` - If the config file cannot be read
 /// * `serde_json::Error` - If the config file cannot be parsed
-/// * `std::env::VarError` - If the environment variable cannot be read or parsed
 pub fn load_config(path: &str) -> Result<Config, Box<dyn Error>> {
   let str: String;
   str = fs::read_to_string(path).unwrap().parse().unwrap();

@@ -64,8 +64,21 @@ async fn check_and_update_ip(config: &Config) -> Result<(), Box<dyn std::error::
 
 /// Handles the input arguments
 /// Currently only custom config parameter is supported
-/// ### Returns
+/// # Returns
 /// * `String` - Path to the custom config file
+/// # Examples
+///
+/// ```
+/// use cloudflare_dns_updater::handle_args;
+/// use cloudflare_dns_updater::config_loader::load_config;
+///
+/// let config_path = handle_args();
+/// let config = load_config(config_path.as_str()).expect("Failed to load config!");
+/// ```
+///
+/// # Errors
+/// * `std::env::VarError` - If the environment variable could not be read or parsed
+/// * `std::env::VarError` - If the environment variable is not set
 fn handle_args() -> String {
   let mut config_path: Option<&str> = None;
   let args: Vec<String> = std::env::args().collect();
