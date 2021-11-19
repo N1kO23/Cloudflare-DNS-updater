@@ -25,16 +25,19 @@ pub struct Zone {
 }
 
 /// Loads a config from file and returns it. If load fails, an error is thrown.
+///
 /// # Arguments
 /// * `path` - Path to a custom config file, if unspecified, the config is loaded from root directory.
+///
 /// # Returns
 /// * `Config` - The loaded config
+///
 /// # Errors
 /// * `std::io::Error` - If the config file cannot be read
 /// * `serde_json::Error` - If the config file cannot be parsed
 pub fn load_config(path: &str) -> Result<Config, Box<dyn Error>> {
   let str: String;
-  str = fs::read_to_string(path).unwrap().parse().unwrap();
-  let conf: Config = serde_json::from_str(&str).unwrap();
+  str = fs::read_to_string(path)?.parse()?;
+  let conf: Config = serde_json::from_str(&str)?;
   Ok(conf)
 }

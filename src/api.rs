@@ -53,6 +53,7 @@ const IP_ADDRESS_URL: &str = "https://api.ipify.org?format=json";
 const CF_BASE_URL: &str = "https://api.cloudflare.com/client/v4/zones/";
 
 /// Fetches the current public IP address
+///
 /// # Example
 /// ```
 /// use cloudflare_dns_updater::api;
@@ -60,23 +61,26 @@ const CF_BASE_URL: &str = "https://api.cloudflare.com/client/v4/zones/";
 /// let ip = api::get_current_ip().await?;
 /// println!("{}", ip);
 /// ```
+///
 /// # Errors
 /// Returns an error if the request fails
-/// # Panics
-/// Panics if the response is not valid JSON
+///
 /// # Returns
 /// The current public IP address
+///
 /// # Remarks
 /// The IP address is fetched from https://api.ipify.org
+///
 /// # See Also
 /// * [https://api.ipify.org](https://api.ipify.org)
 pub async fn get_current_ip() -> Result<String, reqwest::Error> {
   let response = reqwest::get(IP_ADDRESS_URL).await?;
-  let cur_ip: CurrentIP = response.json().await.unwrap();
+  let cur_ip: CurrentIP = response.json().await?;
   Ok(cur_ip.ip)
 }
 
 /// Fetches the DNS records for the given zone
+///
 /// # Example
 /// ```
 /// use cloudflare_dns_updater::api;
@@ -87,14 +91,18 @@ pub async fn get_current_ip() -> Result<String, reqwest::Error> {
 /// "YOUR_API_KEY_HERE"
 /// ).await?;
 /// ```
+///
 /// # Errors
 /// Returns an error if the request fails
-/// # Panics
-/// Panics if the response is not valid JSON
+///
+/// Returns an error if the JSON is not a valid
+///
 /// # Returns
 /// The DNS records for the given zone that match the given records
+///
 /// # Remarks
 /// The DNS records are fetched from https://api.cloudflare.com/client/v4/zones/
+///
 /// # See Also
 /// * [https://api.cloudflare.com/client/v4/zones/](https://api.cloudflare.com/client/v4/zones/)
 pub async fn get_record_ip(
@@ -111,7 +119,7 @@ pub async fn get_record_ip(
     .await?
     .text()
     .await?;
-  let mut results: CloudFlareResult = serde_json::from_str(&res).unwrap();
+  let mut results: CloudFlareResult = serde_json::from_str(&res)?;
   results
     .result
     .retain(|record| records.contains(&record.name));
@@ -119,6 +127,7 @@ pub async fn get_record_ip(
 }
 
 /// Updates the given DNS records IP address
+///
 /// # Example
 /// ```
 /// use cloudflare_dns_updater::api;
@@ -129,14 +138,14 @@ pub async fn get_record_ip(
 /// "YOUR_API_KEY_HERE"
 /// ).await?;
 /// ```
+///
 /// # Returns
 /// * `Ok(())` - If the IP address was updated successfully
 /// * `Err(e)` - If the IP address could not be updated
 ///
-/// # Panics
-/// Panics if the request fails
 /// # Remarks
 /// The DNS records are updated from https://api.cloudflare.com/client/v4/zones/
+///
 /// # See Also
 /// * [https://api.cloudflare.com/client/v4/zones/](https://api.cloudflare.com/client/v4/zones/)
 pub async fn update_record(
@@ -160,10 +169,8 @@ pub async fn update_record(
       proxied: record.proxied,
     })
     .send()
-    .await
-    .unwrap()
+    .await?
     .text()
-    .await
-    .unwrap();
+    .await?;
   Ok(())
 }

@@ -12,20 +12,22 @@ async fn main() {
   println!("Cloudflare IP updater v{}", VERSION);
   print!("Loading config... ");
   let config =
-    config_loader::load_config(handle_args().as_str()).expect("\nFailed to load config!");
+    config_loader::load_config(handle_args().as_str()).expect("\nConfigLoadFailException");
   println!("Loaded!");
   loop {
     match check_and_update_ip(&config).await {
       Ok(()) => {}
-      Err(e) => println!("Error: {}", e),
+      Err(e) => println!("\nError: {}", e),
     }
     std::thread::sleep(std::time::Duration::from_secs(config.update_threshold));
   }
 }
 
 /// Checks the zones and their flagged records for IP address changes and updates them.
-/// # Arguments
+///
+///  # Arguments
 /// * `config` - The configuration to use
+///
 /// # Returns
 /// * `Ok(())` - If the IP addresses were updated successfully
 /// * `Err(e)` - If the IP addresses could not be updated
@@ -62,10 +64,12 @@ async fn check_and_update_ip(config: &Config) -> Result<(), Box<dyn std::error::
   Ok(())
 }
 
-/// Handles the input arguments
+/// Handles the input arguments.
 /// Currently only custom config parameter is supported
+///
 /// # Returns
 /// * `String` - Path to the custom config file
+///
 /// # Examples
 ///
 /// ```
