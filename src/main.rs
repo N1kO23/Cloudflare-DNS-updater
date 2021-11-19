@@ -19,7 +19,7 @@ async fn main() {
       Ok(()) => {}
       Err(e) => println!("Error: {}", e),
     }
-    std::thread::sleep(std::time::Duration::from_secs(120));
+    std::thread::sleep(std::time::Duration::from_secs(config.update_threshold));
   }
 }
 

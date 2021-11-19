@@ -8,6 +8,8 @@ use std::fs;
 pub struct Config {
   /// The authentication key for the Cloudflare API
   pub auth_key: String,
+  /// The threshold of how often to update the DNS records in seconds
+  pub update_threshold: u64,
   /// The list of zones to update
   pub zones: Vec<Zone>,
 }

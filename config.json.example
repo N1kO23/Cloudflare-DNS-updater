@@ -1,5 +1,6 @@
 {
   "AuthKey": "your auth key here",
+  "UpdateThreshold": 120,
   "Zones": [
     {
       "ZoneId": "the zone id",
