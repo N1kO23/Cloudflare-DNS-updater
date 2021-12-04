@@ -1,9 +1,10 @@
-name: Build cloudflare_ddns_updater
+name: Build App
 
 on: [push, pull_request, workflow_dispatch]
 
 env:
   CARGO_TERM_COLOR: always
+  APP_NAME: cloudflare_ddns_updater
 
 jobs:
   build-linux:
@@ -40,8 +41,8 @@ jobs:
     - name: 💎 Upload artifact
       uses: actions/upload-artifact@v1
       with:
-        name: cloudflare_ddns_updater_compiled_linux_${{matrix.targetPlatform}}
-        path: target/${{matrix.targetPlatform}}-unknown-linux-gnu/release/cloudflare_ddns_updater
+        name: ${{env.APP_NAME}}_compiled_linux_${{matrix.targetPlatform}}
+        path: target/${{matrix.targetPlatform}}-unknown-linux-gnu/release/${{env.APP_NAME}}
 
   build-windows:
     name: "❄ Compile for Windows"
@@ -56,8 +57,8 @@ jobs:
     - name: 💎 Upload artifact
       uses: actions/upload-artifact@v1
       with:
-        name: cloudflare_ddns_updater_compiled_windows
-        path: target/release/cloudflare_ddns_updater.exe
+        name: ${{env.APP_NAME}}_compiled_windows
+        path: target/release/${{env.APP_NAME}}.exe
 
   build-macos:
     name: "🍎 Compile for MacOS"
@@ -72,8 +73,8 @@ jobs:
     - name: 💎 Upload artifact
       uses: actions/upload-artifact@v1
       with:
-        name: cloudflare_ddns_updater_compiled_macos
-        path: target/release/cloudflare_ddns_updater
+        name: ${{env.APP_NAME}}_compiled_macos
+        path: target/release/${{env.APP_NAME}}
     
 
   create-release:
@@ -128,7 +129,7 @@ jobs:
       - name: 💎 Download ${{matrix.targetPlatform}} Binaries
         uses: actions/download-artifact@v2
         with:
-          name: cloudflare_ddns_updater_compiled_${{matrix.targetPlatform}}
+          name: ${{env.APP_NAME}}_compiled_${{matrix.targetPlatform}}
           path: ${{matrix.targetPlatform}}_build
 
       # Upload Release
@@ -139,6 +140,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ${{matrix.targetPlatform}}_build/${{ matrix.targetPlatform == 'windows' && 'cloudflare_ddns_updater.exe' || 'cloudflare_ddns_updater' }}
-          asset_name: cloudflare_ddns_updater.${{matrix.targetPlatform}}
+          asset_path: ${{matrix.targetPlatform}}_build/${{ matrix.targetPlatform == 'windows' && '${{env.APP_NAME}}.exe' || '${{env.APP_NAME}}' }}
+          asset_name: ${{env.APP_NAME}}.${{matrix.targetPlatform}}
           asset_content_type: application/octet-stream
