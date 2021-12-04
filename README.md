@@ -9,16 +9,26 @@ You can compile the updater from source or download the binary. To compile the p
 
 Create your `config.json` that matches the example
 ```json
+
 {
-  "AuthKey": "your auth key here",
   "UpdateThreshold": 120,
-  "Zones": [
+  "Keys": [
     {
-      "ZoneId": "the zone id",
-      "Records": [
-        "your.dns.com",
-        "another.record.moe",
-        "example.org"
+      "AuthKey": "your auth key to some zones",
+      "Zones": [
+        {
+          "ZoneId": "dfhmordntv8t4vb8snittvbies7nct7s47v",
+          "Records": ["test2.domain.moe", "test.domain.moe", "tast.domain.moe"]
+        }
+      ]
+    },
+    {
+      "AuthKey": "your auth key to some other zones",
+      "Zones": [
+        {
+          "ZoneId": "esyigod5tihdvtudn5gitvnecrasdadg",
+          "Records": ["error.bababooey.com", "backend.bababooey.com", "bababooey.com"]
+        }
       ]
     }
   ]
