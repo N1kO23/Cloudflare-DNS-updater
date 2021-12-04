@@ -35,31 +35,39 @@ async fn check_and_update_ip(config: &Config) -> Result<(), Box<dyn std::error::
   print!("\nGetting current IP address");
   let cur_ip = api::get_current_ip().await?;
   println!(" - {}\n", cur_ip);
-  for z in 0..config.zones.len() {
-    println!("Updating records for zone {}", config.zones[z].zone_id);
-    let record_ips: CloudFlareResult = api::get_record_ip(
-      &config.zones[z].records,
-      &config.zones[z].zone_id,
-      &config.auth_key,
-    )
-    .await?;
-    for i in 0..config.zones[z].records.len() {
-      if !record_ips.result.get(i).is_none() && !record_ips.result[i].locked {
-        if cur_ip != record_ips.result[i].content {
-          print!(
-            "Updating record {} from {} to {}",
-            record_ips.result[i].name, record_ips.result[i].content, cur_ip
-          );
-          match api::update_record(&record_ips.result[i], &cur_ip, &config.auth_key).await {
-            Ok(()) => println!(" - Record updated"),
-            Err(e) => println!(" - Error: {}", e),
+  for k in 0..config.keys.len() {
+    println!("Updating zones for key {}", config.keys[k].auth_key);
+    for z in 0..config.keys[k].zones.len() {
+      println!(
+        "Updating records for zone {}",
+        config.keys[k].zones[z].zone_id
+      );
+      let record_ips: CloudFlareResult = api::get_record_ip(
+        &config.keys[k].zones[z].records,
+        &config.keys[k].zones[z].zone_id,
+        &config.keys[k].auth_key,
+      )
+      .await?;
+      for i in 0..config.keys[k].zones[z].records.len() {
+        if !record_ips.result.get(i).is_none() && !record_ips.result[i].locked {
+          if cur_ip != record_ips.result[i].content {
+            print!(
+              "Updating record {} from {} to {}",
+              record_ips.result[i].name, record_ips.result[i].content, cur_ip
+            );
+            match api::update_record(&record_ips.result[i], &cur_ip, &config.keys[k].auth_key).await
+            {
+              Ok(()) => println!(" - Record updated"),
+              Err(e) => println!(" - Error: {}", e),
+            }
+          } else {
+            println!("Record {} is up to date", record_ips.result[i].name);
           }
-        } else {
-          println!("Record {} is up to date", record_ips.result[i].name);
         }
       }
+      println!("Done updating zone")
     }
-    println!("Done updating zone")
+    println!("Done updating keys zones")
   }
   Ok(())
 }

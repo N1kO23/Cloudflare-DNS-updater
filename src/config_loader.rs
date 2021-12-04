@@ -6,10 +6,18 @@ use std::fs;
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Config {
-  /// The authentication key for the Cloudflare API
-  pub auth_key: String,
   /// The threshold of how often to update the DNS records in seconds
   pub update_threshold: u64,
+  /// The list of keys to update
+  pub keys: Vec<Key>,
+}
+
+/// The structure of the key for zones
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct Key {
+  /// The authentication key for the Cloudflare API
+  pub auth_key: String,
   /// The list of zones to update
   pub zones: Vec<Zone>,
 }

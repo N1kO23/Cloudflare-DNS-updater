@@ -1,11 +1,22 @@
 {
-  "AuthKey": "your auth key here",
   "UpdateThreshold": 120,
-  "Zones": [
+  "Keys": [
     {
-      "ZoneId": "the zone id",
-      "Records": [
-        "record.name.com"
+      "AuthKey": "nice key bro",
+      "Zones": [
+        {
+          "ZoneId": "dfhmordntv8t4vb8snittvbies7nct7s47v",
+          "Records": ["test2.domain.moe", "test.domain.moe", "tast.domain.moe"]
+        }
+      ]
+    },
+    {
+      "AuthKey": "another pog key",
+      "Zones": [
+        {
+          "ZoneId": "esyigod5tihdvtudn5gitvnecrasdadg",
+          "Records": ["error.bababooey.com", "backend.bababooey.com", "bababooey.com"]
+        }
       ]
     }
   ]
