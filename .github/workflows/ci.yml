@@ -4,7 +4,7 @@ on: [push, pull_request, workflow_dispatch]
 
 env:
   CARGO_TERM_COLOR: always
-  APP_NAME: cloudflare_ddns_updater
+  APP_NAME: cloudflare_dns_updater
 
 jobs:
   build-linux:
