@@ -21,6 +21,8 @@ jobs:
     steps:
     - name: 🛎 Checkout
       uses: actions/checkout@v2
+    - name: Install openssl (libssl-dev) 
+      run: sudo apt install libssl-dev -y
     - name: Install linker (multilib)
       run: "sudo apt install gcc-multilib -y"
     - name: Install linker (mips)
