@@ -22,8 +22,6 @@ jobs:
     steps:
     - name: 🛎 Checkout
       uses: actions/checkout@v2
-    # - name: Install openssl (libssl-dev) 
-    #   run: sudo apt install libssl-dev -y
     # - name: Install linker (multilib)
     #   run: "sudo apt install gcc-multilib -y"
     # - name: Install linker (mips)
@@ -115,11 +113,7 @@ jobs:
     strategy:
       matrix: 
        targetPlatform:
-          - linux_aarch64
-          - linux_i686
           - linux_x86_64
-          - linux_mips
-          - linux_mipsel
           - windows
           - macos
       fail-fast: false
