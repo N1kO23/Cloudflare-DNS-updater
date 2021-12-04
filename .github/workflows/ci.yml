@@ -1,0 +1,142 @@
+name: Build cloudflare_ddns
+
+on: [push, pull_request, workflow_dispatch]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        targetPlatform: 
+          - x86_64
+          - i686
+          - aarch64
+          - mips
+          - mipsel
+    name: "🐧 Compile for Linux"
+    runs-on: ubuntu-latest
+    steps:
+    - name: 🛎 Checkout
+      uses: actions/checkout@v2
+    - name: Install linker (multilib)
+      run: "sudo apt install gcc-multilib -y"
+    - name: Install linker (mips)
+      run: "sudo apt install gcc-mips-linux-gnu -y"
+    - name: Install linker (mipsel)
+      run: "sudo apt install gcc-mipsel-linux-gnu -y"
+    - name: Install linker (aarch64)
+      run: "sudo apt install gcc-aarch64-linux-gnu -y"
+    - name: 🗳 Add Target
+      run: "rustup target add ${{matrix.targetPlatform}}-unknown-linux-gnu"
+    - name: 🛠 Build
+      run: cargo build --target ${{matrix.targetPlatform}}-unknown-linux-gnu --release
+    - name: 🧪 Run tests
+      run: cargo test --release
+    - name: 💎 Upload artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: cloudflare_ddns_compiled_linux_${{matrix.targetPlatform}}
+        path: target/${{matrix.targetPlatform}}-unknown-linux-gnu/release/cloudflare_ddns
+
+  build-windows:
+    name: "❄ Compile for Windows"
+    runs-on: windows-latest
+    steps:
+    - name: 🛎 Checkout
+      uses: actions/checkout@v2
+    - name: 🛠 Build
+      run: cargo build --release
+    - name: 🧪 Run tests
+      run: cargo test --release
+    - name: 💎 Upload artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: cloudflare_ddns_compiled_windows
+        path: target/release/cloudflare_ddns.exe
+
+  build-macos:
+    name: "🍎 Compile for MacOS"
+    runs-on: macos-latest
+    steps:
+    - name: 🛎 Checkout
+      uses: actions/checkout@v2
+    - name: 🛠 Build
+      run: cargo build --release
+    - name: 🧪 Run tests
+      run: cargo test --release
+    - name: 💎 Upload artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: cloudflare_ddns_compiled_macos
+        path: target/release/cloudflare_ddns
+    
+
+  create-release:
+    name: "📦 Create Release"
+    runs-on: ubuntu-latest
+    # runs-on: self-hosted
+    needs: [build-linux, build-macos, build-windows]
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      
+      # Yes we get the repo again but only for the version in the package.json
+      - name: 🛎 Checkout
+        uses: actions/checkout@v2
+      - name: ⚡ Set Version Variable
+        id: version
+        run: >
+          echo "::set-output name=value::$(cargo pkgid | cut -d# -f2 | cut -d: -f2)"
+     
+      # The release script that prepares a new Github release
+      - name: ⚡ Create Release
+        uses: actions/create-release@v1
+        id: create_release
+        continue-on-error: true
+        with:
+          draft: false
+          prerelease: false
+          release_name: Cloudflare DNS Updater v${{ steps.version.outputs.value }}
+          tag_name: v${{ steps.version.outputs.value }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  upload: 
+    name: "📤 Upload Builds"
+    runs-on: ubuntu-latest
+    # runs-on: self-hosted
+    needs: create-release
+    strategy:
+      matrix: 
+       targetPlatform:
+          - linux_aarch64
+          - linux_i686
+          - linux_x86_64
+          - linux_mips
+          - linux_mipsel
+          - windows
+          - macos
+      fail-fast: false
+    steps:
+
+      # Download the artifacts
+      - name: 💎 Download ${{matrix.targetPlatform}} Binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: cloudflare_ddns_compiled_${{matrix.targetPlatform}}
+          path: ${{matrix.targetPlatform}}_build
+
+      # Upload Release
+      - name: 💎 Upload ${{matrix.targetPlatform}} Artifact
+        uses: actions/upload-release-asset@v1
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ${{matrix.targetPlatform}}_build/${{ matrix.targetPlatform == 'windows' && 'cloudflare_ddns.exe' || 'cloudflare_ddns' }}
+          asset_name: cloudflare_ddns.${{matrix.targetPlatform}}
+          asset_content_type: application/octet-stream
