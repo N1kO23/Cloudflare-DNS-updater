@@ -6,7 +6,8 @@
       "Zones": [
         {
           "ZoneId": "dfhmordntv8t4vb8snittvbies7nct7s47v",
-          "Records": ["test2.domain.moe", "test.domain.moe", "tast.domain.moe"]
+          "ARecords": ["test2.domain.moe", "test.domain.moe", "tast.domain.moe"],
+          "AAAARecords": ["test2.domain.moe", "test.domain.moe", "tast.domain.moe"]
         }
       ]
     },
@@ -15,7 +16,8 @@
       "Zones": [
         {
           "ZoneId": "esyigod5tihdvtudn5gitvnecrasdadg",
-          "Records": ["error.bababooey.com", "backend.bababooey.com", "bababooey.com"]
+          "ARecords": ["error.bababooey.com", "backend.bababooey.com", "bababooey.com"],
+          "AAAARecords": ["error.bababooey.com"]
         }
       ]
     }
