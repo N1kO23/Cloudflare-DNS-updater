@@ -9,18 +9,18 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 /// The main function of the program
 #[tokio::main]
 async fn main() {
-  println!("Cloudflare IP updater v{}", VERSION);
-  print!("Loading config... ");
-  let config =
-    config_loader::load_config(handle_args().as_str()).expect("\nConfigLoadFailException");
-  println!("Loaded!");
-  loop {
-    match check_and_update_ip(&config).await {
-      Ok(()) => {}
-      Err(e) => println!("\nError: {}", e),
+    println!("Cloudflare IP updater v{}", VERSION);
+    print!("Loading config... ");
+    let config =
+        config_loader::load_config(handle_args().as_str()).expect("\nConfigLoadFailException");
+    println!("Loaded!");
+    loop {
+        match check_and_update_ip(&config).await {
+            Ok(()) => {}
+            Err(e) => println!("\nError: {}", e),
+        }
+        std::thread::sleep(std::time::Duration::from_secs(config.update_threshold));
     }
-    std::thread::sleep(std::time::Duration::from_secs(config.update_threshold));
-  }
 }
 
 /// Checks the zones and their flagged records for IP address changes and updates them.
@@ -32,44 +32,85 @@ async fn main() {
 /// * `Ok(())` - If the IP addresses were updated successfully
 /// * `Err(e)` - If the IP addresses could not be updated
 async fn check_and_update_ip(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
-  print!("\nGetting current IP address");
-  let cur_ip = api::get_current_ip().await?;
-  println!(" - {}\n", cur_ip);
-  for k in 0..config.keys.len() {
-    println!("Updating zones for key {}", config.keys[k].auth_key);
-    for z in 0..config.keys[k].zones.len() {
-      println!(
-        "Updating records for zone {}",
-        config.keys[k].zones[z].zone_id
-      );
-      let record_ips: CloudFlareResult = api::get_record_ip(
-        &config.keys[k].zones[z].records,
-        &config.keys[k].zones[z].zone_id,
-        &config.keys[k].auth_key,
-      )
-      .await?;
-      for i in 0..config.keys[k].zones[z].records.len() {
-        if !record_ips.result.get(i).is_none() && !record_ips.result[i].locked {
-          if cur_ip != record_ips.result[i].content {
-            print!(
-              "Updating record {} from {} to {}",
-              record_ips.result[i].name, record_ips.result[i].content, cur_ip
+    print!("\nGetting current IP addresses");
+    let cur_ip = api::get_current_ip().await?;
+    println!(" - {}, {}\n", cur_ip.ipv4, cur_ip.ipv6);
+    for k in 0..config.keys.len() {
+        println!("Updating zones for key {}", config.keys[k].auth_key);
+        for z in 0..config.keys[k].zones.len() {
+            println!(
+                "Updating records for zone {}",
+                config.keys[k].zones[z].zone_id
             );
-            match api::update_record(&record_ips.result[i], &cur_ip, &config.keys[k].auth_key).await
-            {
-              Ok(()) => println!(" - Record updated"),
-              Err(e) => println!(" - Error: {}", e),
+            let a_record_ips: CloudFlareResult = api::get_record_ip(
+                &config.keys[k].zones[z].a_records,
+                &config.keys[k].zones[z].zone_id,
+                &config.keys[k].auth_key,
+                "A",
+            )
+            .await?;
+            let aaaa_record_ips: CloudFlareResult = api::get_record_ip(
+                &config.keys[k].zones[z].aaaa_records,
+                &config.keys[k].zones[z].zone_id,
+                &config.keys[k].auth_key,
+                "AAAA",
+            )
+            .await?;
+            for i in 0..config.keys[k].zones[z].a_records.len() {
+                if !a_record_ips.result.get(i).is_none() && !a_record_ips.result[i].locked {
+                    if cur_ip.ipv4 != a_record_ips.result[i].content {
+                        print!(
+                            "Updating record {} from {} to {}",
+                            a_record_ips.result[i].name,
+                            a_record_ips.result[i].content,
+                            cur_ip.ipv4
+                        );
+                        match api::update_record(
+                            &a_record_ips.result[i],
+                            &cur_ip.ipv4,
+                            &config.keys[k].auth_key,
+                            "A",
+                        )
+                        .await
+                        {
+                            Ok(()) => println!(" - Record updated"),
+                            Err(e) => println!(" - Error: {}", e),
+                        }
+                    } else {
+                        println!("Record {} is up to date", a_record_ips.result[i].name);
+                    }
+                }
             }
-          } else {
-            println!("Record {} is up to date", record_ips.result[i].name);
-          }
+            for i in 0..config.keys[k].zones[z].aaaa_records.len() {
+                if !aaaa_record_ips.result.get(i).is_none() && !aaaa_record_ips.result[i].locked {
+                    if cur_ip.ipv6 != aaaa_record_ips.result[i].content {
+                        print!(
+                            "Updating record {} from {} to {}",
+                            aaaa_record_ips.result[i].name,
+                            aaaa_record_ips.result[i].content,
+                            cur_ip.ipv6
+                        );
+                        match api::update_record(
+                            &aaaa_record_ips.result[i],
+                            &cur_ip.ipv6,
+                            &config.keys[k].auth_key,
+                            "AAAA",
+                        )
+                        .await
+                        {
+                            Ok(()) => println!(" - Record updated"),
+                            Err(e) => println!(" - Error: {}", e),
+                        }
+                    } else {
+                        println!("Record {} is up to date", aaaa_record_ips.result[i].name);
+                    }
+                }
+            }
+            println!("Done updating zone")
         }
-      }
-      println!("Done updating zone")
+        println!("Done updating keys zones")
     }
-    println!("Done updating keys zones")
-  }
-  Ok(())
+    Ok(())
 }
 
 /// Handles the input arguments.
@@ -92,22 +133,22 @@ async fn check_and_update_ip(config: &Config) -> Result<(), Box<dyn std::error::
 /// * `std::env::VarError` - If the environment variable could not be read or parsed
 /// * `std::env::VarError` - If the environment variable is not set
 fn handle_args() -> String {
-  let mut config_path: Option<&str> = None;
-  let args: Vec<String> = std::env::args().collect();
-  let mut index: usize = 0;
-  while args.len() > index {
-    let arg: &str = &args[index];
-    match arg {
-      "-c" => {
-        index = index + 1;
-        if index < args.len() {
-          config_path = Some(&args[index]);
-          index = index + 1;
-          println!("Using custom config path: {:?}", config_path);
+    let mut config_path: Option<&str> = None;
+    let args: Vec<String> = std::env::args().collect();
+    let mut index: usize = 0;
+    while args.len() > index {
+        let arg: &str = &args[index];
+        match arg {
+            "-c" => {
+                index = index + 1;
+                if index < args.len() {
+                    config_path = Some(&args[index]);
+                    index = index + 1;
+                    println!("Using custom config path: {:?}", config_path);
+                }
+            }
+            _ => index = index + 1,
         }
-      }
-      _ => index = index + 1,
     }
-  }
-  return config_path.unwrap_or("config.json").to_string();
+    return config_path.unwrap_or("config.json").to_string();
 }
