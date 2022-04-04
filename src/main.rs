@@ -32,9 +32,8 @@ async fn main() {
 /// * `Ok(())` - If the IP addresses were updated successfully
 /// * `Err(e)` - If the IP addresses could not be updated
 async fn check_and_update_ip(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
-    print!("\nGetting current IP addresses");
+    println!("Getting current IP addresses...");
     let cur_ip = api::get_current_ip().await?;
-    println!(" - {}, {}\n", cur_ip.ipv4, cur_ip.ipv6);
     for k in 0..config.keys.len() {
         println!("Updating zones for key {}", config.keys[k].auth_key);
         for z in 0..config.keys[k].zones.len() {
@@ -56,55 +55,68 @@ async fn check_and_update_ip(config: &Config) -> Result<(), Box<dyn std::error::
                 "AAAA",
             )
             .await?;
-            for i in 0..config.keys[k].zones[z].a_records.len() {
-                if !a_record_ips.result.get(i).is_none() && !a_record_ips.result[i].locked {
-                    if cur_ip.ipv4 != a_record_ips.result[i].content {
-                        print!(
-                            "Updating record {} from {} to {}",
-                            a_record_ips.result[i].name,
-                            a_record_ips.result[i].content,
-                            cur_ip.ipv4
-                        );
-                        match api::update_record(
-                            &a_record_ips.result[i],
-                            &cur_ip.ipv4,
-                            &config.keys[k].auth_key,
-                            "A",
-                        )
-                        .await
-                        {
-                            Ok(()) => println!(" - Record updated"),
-                            Err(e) => println!(" - Error: {}", e),
+            match cur_ip.ipv4.clone() {
+                Some(ipv4) => {
+                    println!("\nCurrent IPv4 address: {}", ipv4);
+                    for i in 0..config.keys[k].zones[z].a_records.len() {
+                        if !a_record_ips.result.get(i).is_none() && !a_record_ips.result[i].locked {
+                            if ipv4 != a_record_ips.result[i].content {
+                                print!(
+                                    "Updating record {} from {} to {}",
+                                    a_record_ips.result[i].name,
+                                    a_record_ips.result[i].content,
+                                    ipv4
+                                );
+                                match api::update_record(
+                                    &a_record_ips.result[i],
+                                    &ipv4,
+                                    &config.keys[k].auth_key,
+                                    "A",
+                                )
+                                .await
+                                {
+                                    Ok(()) => println!(" - Record updated"),
+                                    Err(e) => println!(" - Error: {}", e),
+                                }
+                            } else {
+                                println!("Record {} is up to date", a_record_ips.result[i].name);
+                            }
                         }
-                    } else {
-                        println!("Record {} is up to date", a_record_ips.result[i].name);
                     }
                 }
+                None => println!("No IPv4 address found, skipping A records"),
             }
-            for i in 0..config.keys[k].zones[z].aaaa_records.len() {
-                if !aaaa_record_ips.result.get(i).is_none() && !aaaa_record_ips.result[i].locked {
-                    if cur_ip.ipv6 != aaaa_record_ips.result[i].content {
-                        print!(
-                            "Updating record {} from {} to {}",
-                            aaaa_record_ips.result[i].name,
-                            aaaa_record_ips.result[i].content,
-                            cur_ip.ipv6
-                        );
-                        match api::update_record(
-                            &aaaa_record_ips.result[i],
-                            &cur_ip.ipv6,
-                            &config.keys[k].auth_key,
-                            "AAAA",
-                        )
-                        .await
+            match cur_ip.ipv6.clone() {
+                Some(ipv6) => {
+                    for i in 0..config.keys[k].zones[z].aaaa_records.len() {
+                        if !aaaa_record_ips.result.get(i).is_none()
+                            && !aaaa_record_ips.result[i].locked
                         {
-                            Ok(()) => println!(" - Record updated"),
-                            Err(e) => println!(" - Error: {}", e),
+                            if ipv6 != aaaa_record_ips.result[i].content {
+                                print!(
+                                    "Updating record {} from {} to {}",
+                                    aaaa_record_ips.result[i].name,
+                                    aaaa_record_ips.result[i].content,
+                                    ipv6
+                                );
+                                match api::update_record(
+                                    &aaaa_record_ips.result[i],
+                                    &ipv6,
+                                    &config.keys[k].auth_key,
+                                    "AAAA",
+                                )
+                                .await
+                                {
+                                    Ok(()) => println!(" - Record updated"),
+                                    Err(e) => println!(" - Error: {}", e),
+                                }
+                            } else {
+                                println!("Record {} is up to date", aaaa_record_ips.result[i].name);
+                            }
                         }
-                    } else {
-                        println!("Record {} is up to date", aaaa_record_ips.result[i].name);
                     }
                 }
+                None => println!("No IPv6 address found, skipping AAAA records"),
             }
             println!("Done updating zone")
         }

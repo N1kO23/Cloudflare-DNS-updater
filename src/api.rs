@@ -9,9 +9,9 @@ pub struct CurrentIP {
 
 pub struct IPAddresses {
     /// The fetched IPv4 address
-    pub ipv4: String,
+    pub ipv4: Option<String>,
     /// The fetched IPv6 address
-    pub ipv6: String,
+    pub ipv6: Option<String>,
 }
 
 /// Struct for the Cloudflares response
@@ -67,7 +67,7 @@ const CF_BASE_URL: &str = "https://api.cloudflare.com/client/v4/zones/";
 /// use cloudflare_dns_updater::api;
 ///
 /// let ip = api::get_current_ip().await?;
-/// println!("{}", ip);
+/// println!("{}", Some(ip.ip));
 /// ```
 ///
 /// # Errors
@@ -82,17 +82,19 @@ const CF_BASE_URL: &str = "https://api.cloudflare.com/client/v4/zones/";
 /// # See Also
 /// * [https://api.ipify.org](https://api.ipify.org)
 pub async fn get_current_ip() -> Result<IPAddresses, reqwest::Error> {
-    let ipv4 = reqwest::get(IPV4_ADDRESS_URL)
-        .await?
-        .json::<CurrentIP>()
-        .await?
-        .ip;
-    let ipv6 = reqwest::get(IPV6_ADDRESS_URL)
-        .await?
-        .json::<CurrentIP>()
-        .await?
-        .ip;
-    let cur_ips = IPAddresses { ipv4, ipv6 };
+    let mut cur_ips = IPAddresses {
+        ipv4: None,
+        ipv6: None,
+    };
+    match reqwest::get(IPV4_ADDRESS_URL).await {
+        Ok(ipv4) => cur_ips.ipv4 = Some(ipv4.json::<CurrentIP>().await?.ip),
+        Err(_) => (),
+    };
+    match reqwest::get(IPV6_ADDRESS_URL).await {
+        Ok(ipv6) => cur_ips.ipv6 = Some(ipv6.json::<CurrentIP>().await?.ip),
+        Err(_) => (),
+    };
+
     Ok(cur_ips)
 }
 
