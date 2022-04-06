@@ -14,20 +14,22 @@ Create your `config.json` that matches the example
   "UpdateThreshold": 120,
   "Keys": [
     {
-      "AuthKey": "your auth key to some zones",
+      "AuthKey": "nice key bro",
       "Zones": [
         {
           "ZoneId": "dfhmordntv8t4vb8snittvbies7nct7s47v",
-          "Records": ["test2.domain.moe", "test.domain.moe", "tast.domain.moe"]
+          "ARecords": ["test2.domain.moe", "test.domain.moe", "tast.domain.moe"],
+          "AaaaRecords": ["test2.domain.moe", "test.domain.moe", "tast.domain.moe"]
         }
       ]
     },
     {
-      "AuthKey": "your auth key to some other zones",
+      "AuthKey": "another pog key",
       "Zones": [
         {
           "ZoneId": "esyigod5tihdvtudn5gitvnecrasdadg",
-          "Records": ["error.bababooey.com", "backend.bababooey.com", "bababooey.com"]
+          "ARecords": ["error.bababooey.com", "backend.bababooey.com", "bababooey.com"],
+          "AaaaRecords": ["error.bababooey.com"]
         }
       ]
     }
