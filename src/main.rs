@@ -88,6 +88,7 @@ async fn check_and_update_ip(config: &Config) -> Result<(), Box<dyn std::error::
             }
             match cur_ip.ipv6.clone() {
                 Some(ipv6) => {
+                    println!("\nCurrent IPv6 address: {}", ipv6);
                     for i in 0..config.keys[k].zones[z].aaaa_records.len() {
                         if !aaaa_record_ips.result.get(i).is_none()
                             && !aaaa_record_ips.result[i].locked
