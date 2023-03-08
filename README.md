@@ -37,6 +37,14 @@ Create your `config.json` that matches the example
 }
 
 ```
+#### Field values
+- `UpdateThreshold`: Interval in seconds how often to check current IP and update the records if they don't match the IP
+- `AuthKey`: Your private key to authenticate into Cloudflare
+- `ZoneId`: ID of the zone to be edited
+- `ARecords`: List of A-Records to be updated inside the zone, IPv4
+- `AaaaRecords`: List of AAAA-Records to be updated inside the zone, IPv6
+
+You can add more different keys and zones to those keys, as well as A and AAAA records to your needs, as long as your config follows the same structure
 
 ### Important
 You have to generate your authentication key in cloudflare with necessary permissions to view and edit the specified zones and their dns records, detailed instruction can be found [here](https://support.cloudflare.com/hc/en-us/articles/200167836-Managing-API-Tokens-and-Keys)
