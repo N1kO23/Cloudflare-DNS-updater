@@ -18,8 +18,22 @@ pub struct IPAddresses {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CloudFlareResult {
     /// The Cloudflare response containing the array of records
-    pub result: Vec<DNSRecordResult>,
+    pub result: Option<Vec<DNSRecordResult>>,
+    /// Query status
+    pub success: bool,
+    /// Array of errors if any
+    pub errors: Option<Vec<CloudFlareError>>,
 }
+
+/// Struct for the Cloudflare error response
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CloudFlareError {
+    /// The Cloudflare response containing the array of records
+    pub code: u32,
+    /// Array of errors if any
+    pub message: String,
+}
+
 /// The struct for the DNS record
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DNSRecordResult {
@@ -56,8 +70,8 @@ pub struct UpdateRecord {
     pub proxied: bool,
 }
 
-const IPV4_ADDRESS_URL: &str = "https://ip4.seeip.org/json";
-const IPV6_ADDRESS_URL: &str = "https://ip6.seeip.org/json";
+const IPV4_ADDRESS_URL: &str = "https://api.ipify.org?format=json";
+const IPV6_ADDRESS_URL: &str = "https://api64.ipify.org?format=json";
 const CF_BASE_URL: &str = "https://api.cloudflare.com/client/v4/zones/";
 
 /// Fetches the current public IP address
@@ -130,7 +144,7 @@ pub async fn get_record_ip(
     zone: &str,
     auth_key: &str,
     record_type: &str,
-) -> Result<CloudFlareResult, Box<dyn std::error::Error>> {
+) -> Result<Vec<DNSRecordResult>, Box<dyn std::error::Error>> {
     let client = reqwest::Client::new();
     let url = format!("{}{}/dns_records?type={}", CF_BASE_URL, zone, record_type);
     let res = client
@@ -141,10 +155,16 @@ pub async fn get_record_ip(
         .text()
         .await?;
     let mut results: CloudFlareResult = serde_json::from_str(&res)?;
-    results
-        .result
-        .retain(|record| records.contains(&record.name));
-    Ok(results)
+    if results.success {
+        results
+            .result
+            .as_mut()
+            .ok_or_else(|| "No records found!".to_string())?
+            .retain(|record| records.contains(&record.name));
+        Ok(results.result.unwrap())
+    } else {
+        Err(format!("{:?}", results.errors).into())
+    }
 }
 
 /// Updates the given DNS records IP address

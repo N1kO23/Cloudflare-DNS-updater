@@ -1,5 +1,6 @@
-use api::CloudFlareResult;
 use config_loader::Config;
+
+use crate::api::DNSRecordResult;
 
 mod api;
 mod config_loader;
@@ -41,14 +42,14 @@ async fn check_and_update_ip(config: &Config) -> Result<(), Box<dyn std::error::
                 "Updating records for zone {}",
                 config.keys[k].zones[z].zone_id
             );
-            let a_record_ips: CloudFlareResult = api::get_record_ip(
+            let a_record_ips: Vec<DNSRecordResult> = api::get_record_ip(
                 &config.keys[k].zones[z].a_records,
                 &config.keys[k].zones[z].zone_id,
                 &config.keys[k].auth_key,
                 "A",
             )
             .await?;
-            let aaaa_record_ips: CloudFlareResult = api::get_record_ip(
+            let aaaa_record_ips: Vec<DNSRecordResult> = api::get_record_ip(
                 &config.keys[k].zones[z].aaaa_records,
                 &config.keys[k].zones[z].zone_id,
                 &config.keys[k].auth_key,
@@ -59,16 +60,14 @@ async fn check_and_update_ip(config: &Config) -> Result<(), Box<dyn std::error::
                 Some(ipv4) => {
                     println!("\nCurrent IPv4 address: {}", ipv4);
                     for i in 0..config.keys[k].zones[z].a_records.len() {
-                        if !a_record_ips.result.get(i).is_none() && !a_record_ips.result[i].locked {
-                            if ipv4 != a_record_ips.result[i].content {
+                        if !a_record_ips.get(i).is_none() && !a_record_ips[i].locked {
+                            if ipv4 != a_record_ips[i].content {
                                 print!(
                                     "Updating record {} from {} to {}",
-                                    a_record_ips.result[i].name,
-                                    a_record_ips.result[i].content,
-                                    ipv4
+                                    a_record_ips[i].name, a_record_ips[i].content, ipv4
                                 );
                                 match api::update_record(
-                                    &a_record_ips.result[i],
+                                    &a_record_ips[i],
                                     &ipv4,
                                     &config.keys[k].auth_key,
                                     "A",
@@ -79,7 +78,7 @@ async fn check_and_update_ip(config: &Config) -> Result<(), Box<dyn std::error::
                                     Err(e) => println!(" - Error: {}", e),
                                 }
                             } else {
-                                println!("Record {} is up to date", a_record_ips.result[i].name);
+                                println!("Record {} is up to date", a_record_ips[i].name);
                             }
                         }
                     }
@@ -90,18 +89,14 @@ async fn check_and_update_ip(config: &Config) -> Result<(), Box<dyn std::error::
                 Some(ipv6) => {
                     println!("\nCurrent IPv6 address: {}", ipv6);
                     for i in 0..config.keys[k].zones[z].aaaa_records.len() {
-                        if !aaaa_record_ips.result.get(i).is_none()
-                            && !aaaa_record_ips.result[i].locked
-                        {
-                            if ipv6 != aaaa_record_ips.result[i].content {
+                        if !aaaa_record_ips.get(i).is_none() && !aaaa_record_ips[i].locked {
+                            if ipv6 != aaaa_record_ips[i].content {
                                 print!(
                                     "Updating record {} from {} to {}",
-                                    aaaa_record_ips.result[i].name,
-                                    aaaa_record_ips.result[i].content,
-                                    ipv6
+                                    aaaa_record_ips[i].name, aaaa_record_ips[i].content, ipv6
                                 );
                                 match api::update_record(
-                                    &aaaa_record_ips.result[i],
+                                    &aaaa_record_ips[i],
                                     &ipv6,
                                     &config.keys[k].auth_key,
                                     "AAAA",
@@ -112,7 +107,7 @@ async fn check_and_update_ip(config: &Config) -> Result<(), Box<dyn std::error::
                                     Err(e) => println!(" - Error: {}", e),
                                 }
                             } else {
-                                println!("Record {} is up to date", aaaa_record_ips.result[i].name);
+                                println!("Record {} is up to date", aaaa_record_ips[i].name);
                             }
                         }
                     }
