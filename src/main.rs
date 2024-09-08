@@ -60,26 +60,24 @@ async fn check_and_update_ip(config: &Config) -> Result<(), Box<dyn std::error::
                 Some(ipv4) => {
                     println!("\nCurrent IPv4 address: {}", ipv4);
                     for i in 0..config.keys[k].zones[z].a_records.len() {
-                        if !a_record_ips.get(i).is_none() && !a_record_ips[i].locked {
-                            if ipv4 != a_record_ips[i].content {
-                                print!(
-                                    "Updating record {} from {} to {}",
-                                    a_record_ips[i].name, a_record_ips[i].content, ipv4
-                                );
-                                match api::update_record(
-                                    &a_record_ips[i],
-                                    &ipv4,
-                                    &config.keys[k].auth_key,
-                                    "A",
-                                )
-                                .await
-                                {
-                                    Ok(()) => println!(" - Record updated"),
-                                    Err(e) => println!(" - Error: {}", e),
-                                }
-                            } else {
-                                println!("Record {} is up to date", a_record_ips[i].name);
+                        if ipv4 != a_record_ips[i].content {
+                            print!(
+                                "Updating record {} from {} to {}",
+                                a_record_ips[i].name, a_record_ips[i].content, ipv4
+                            );
+                            match api::update_record(
+                                &a_record_ips[i],
+                                &ipv4,
+                                &config.keys[k].auth_key,
+                                "A",
+                            )
+                            .await
+                            {
+                                Ok(()) => println!(" - Record updated"),
+                                Err(e) => println!(" - Error: {}", e),
                             }
+                        } else {
+                            println!("Record {} is up to date", a_record_ips[i].name);
                         }
                     }
                 }
@@ -89,26 +87,24 @@ async fn check_and_update_ip(config: &Config) -> Result<(), Box<dyn std::error::
                 Some(ipv6) => {
                     println!("\nCurrent IPv6 address: {}", ipv6);
                     for i in 0..config.keys[k].zones[z].aaaa_records.len() {
-                        if !aaaa_record_ips.get(i).is_none() && !aaaa_record_ips[i].locked {
-                            if ipv6 != aaaa_record_ips[i].content {
-                                print!(
-                                    "Updating record {} from {} to {}",
-                                    aaaa_record_ips[i].name, aaaa_record_ips[i].content, ipv6
-                                );
-                                match api::update_record(
-                                    &aaaa_record_ips[i],
-                                    &ipv6,
-                                    &config.keys[k].auth_key,
-                                    "AAAA",
-                                )
-                                .await
-                                {
-                                    Ok(()) => println!(" - Record updated"),
-                                    Err(e) => println!(" - Error: {}", e),
-                                }
-                            } else {
-                                println!("Record {} is up to date", aaaa_record_ips[i].name);
+                        if ipv6 != aaaa_record_ips[i].content {
+                            print!(
+                                "Updating record {} from {} to {}",
+                                aaaa_record_ips[i].name, aaaa_record_ips[i].content, ipv6
+                            );
+                            match api::update_record(
+                                &aaaa_record_ips[i],
+                                &ipv6,
+                                &config.keys[k].auth_key,
+                                "AAAA",
+                            )
+                            .await
+                            {
+                                Ok(()) => println!(" - Record updated"),
+                                Err(e) => println!(" - Error: {}", e),
                             }
+                        } else {
+                            println!("Record {} is up to date", aaaa_record_ips[i].name);
                         }
                     }
                 }

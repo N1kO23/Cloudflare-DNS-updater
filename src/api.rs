@@ -43,8 +43,6 @@ pub struct DNSRecordResult {
     pub name: String,
     /// The DNS record IP address
     pub content: String,
-    /// Is the DNS record locked?
-    pub locked: bool,
     /// Is the DNS record proxied?
     pub proxied: bool,
     /// The DNS record ttl
