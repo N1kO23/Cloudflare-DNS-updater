@@ -47,10 +47,6 @@ pub struct DNSRecordResult {
     pub proxied: bool,
     /// The DNS record ttl
     pub ttl: u32,
-    /// The DNS record zone ID
-    pub zone_id: String,
-    /// The DNS record modified date
-    pub modified_on: String,
 }
 
 /// Struct for the record update template
@@ -190,15 +186,13 @@ pub async fn get_record_ip(
 /// * [https://api.cloudflare.com/client/v4/zones/](https://api.cloudflare.com/client/v4/zones/)
 pub async fn update_record(
     record: &DNSRecordResult,
+    zone_id: &str,
     ip: &str,
     auth_key: &str,
     rec_type: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let client = reqwest::Client::new();
-    let url = format!(
-        "{}{}/dns_records/{}",
-        CF_BASE_URL, record.zone_id, record.id
-    );
+    let url = format!("{}{}/dns_records/{}", CF_BASE_URL, zone_id, record.id);
     client
         .put(url)
         .header("Authorization", format!("Bearer {}", auth_key))

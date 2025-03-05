@@ -67,6 +67,7 @@ async fn check_and_update_ip(config: &Config) -> Result<(), Box<dyn std::error::
                             );
                             match api::update_record(
                                 &a_record_ips[i],
+                                &config.keys[k].zones[z].zone_id,
                                 &ipv4,
                                 &config.keys[k].auth_key,
                                 "A",
@@ -94,6 +95,7 @@ async fn check_and_update_ip(config: &Config) -> Result<(), Box<dyn std::error::
                             );
                             match api::update_record(
                                 &aaaa_record_ips[i],
+                                &config.keys[k].zones[z].zone_id,
                                 &ipv6,
                                 &config.keys[k].auth_key,
                                 "AAAA",
